@@ -1,0 +1,6 @@
+touch \
+data/raw/.gitkeep \
+data/processed/.gitkeep \
+data/indexes/.gitkeep \
+data/outputs/.gitkeep \
+results/.gitkeep
