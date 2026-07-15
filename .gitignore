@@ -1,39 +1,108 @@
+# ==========================
 # Python
+# ==========================
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+
+# ==========================
+# Virtual Environments
+# ==========================
+venv/
+.venv/
+env/
+ENV/
 
 # Conda
-.env
-.venv
-venv/
+.conda/
+conda-meta/
 
-# VS Code
+# ==========================
+# IDE
+# ==========================
 .vscode/
+.idea/
 
+# ==========================
 # Jupyter
+# ==========================
 .ipynb_checkpoints/
 
-# macOS
+# ==========================
+# OS Files
+# ==========================
 .DS_Store
-
-# Windows
 Thumbs.db
+desktop.ini
 
-# Models
-models/
+# ==========================
+# Logs
+# ==========================
+*.log
 
+# ==========================
+# Python Build
+# ==========================
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ==========================
+# Test Coverage
+# ==========================
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ==========================
+# Hugging Face Cache
+# ==========================
+.cache/
+huggingface/
+
+# ==========================
 # Data
+# (Ignore dataset contents)
+# ==========================
 data/raw/*
 data/processed/*
 data/indexes/*
 data/outputs/*
 
-# Results
-results/*
-
-# Keep folders
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !data/indexes/.gitkeep
 !data/outputs/.gitkeep
+
+# ==========================
+# Models
+# (Do NOT upload downloaded models)
+# ==========================
+models/*
+
+!models/.gitkeep
+
+# ==========================
+# Results
+# (Generated outputs)
+# ==========================
+results/*
+
 !results/.gitkeep
+
+# ==========================
+# Docs
+# ==========================
+!docs/.gitkeep
+
+# ==========================
+# Notebooks
+# ==========================
+!notebooks/.gitkeep
+
+# ==========================
+# Tests
+# ==========================
+!tests/.gitkeep
