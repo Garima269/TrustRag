@@ -1,0 +1,5 @@
+EMBEDDING_MODEL = "BAAI/bge-base-en-v1.5"
+
+EMBEDDING_DIM = 768
+
+DEFAULT_TOP_K = 5
