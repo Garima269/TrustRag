@@ -1,33 +1,35 @@
-"""
-metrics.py
-
-Implements evaluation metrics for the baseline RAG pipeline.
-
-Metrics:
-1. Exact Match (EM)
-2. F1 Score
-"""
-
+import re
 import string
+from collections import Counter
+
+
 class EvaluationMetrics:
     """
-    Compute evaluation metrics for Question Answering.
+    Calculate QA evaluation metrics.
     """
 
     @staticmethod
     def normalize_text(text: str) -> str:
         """
-        Normalize text before comparison.
+        Normalize text before evaluation.
 
-        - Lowercase
-        - Remove punctuation
-        - Remove extra spaces
+        Operations:
+        1. Convert to lowercase.
+        2. Remove punctuation.
+        3. Remove articles.
+        4. Normalize whitespace.
         """
 
-        text = text.lower()
+        text = str(text).strip().lower()
+        text = text.replace("\n", " ")
 
+        # Remove punctuation.
         text = text.translate(str.maketrans("", "", string.punctuation))
 
+        # Remove common English articles.
+        text = re.sub(r"\b(a|an|the)\b", " ", text)
+
+        # Normalize whitespace.
         text = " ".join(text.split())
 
         return text
@@ -35,14 +37,15 @@ class EvaluationMetrics:
     @staticmethod
     def exact_match(prediction: str, ground_truth: str) -> int:
         """
-        Compute Exact Match (EM).
+        Calculate Exact Match.
 
         Returns:
-            1 if answers match exactly
-            0 otherwise
+            1 if normalized prediction exactly matches
+            normalized ground truth, otherwise 0.
         """
 
         prediction = EvaluationMetrics.normalize_text(prediction)
+
         ground_truth = EvaluationMetrics.normalize_text(ground_truth)
 
         return int(prediction == ground_truth)
@@ -50,20 +53,41 @@ class EvaluationMetrics:
     @staticmethod
     def f1_score(prediction: str, ground_truth: str) -> float:
         """
-        Compute token-level F1 score.
+        Calculate token-level F1 score.
         """
 
         prediction_tokens = EvaluationMetrics.normalize_text(prediction).split()
+
         ground_truth_tokens = EvaluationMetrics.normalize_text(ground_truth).split()
 
-        common_tokens = set(prediction_tokens) & set(ground_truth_tokens)
+        if not prediction_tokens or not ground_truth_tokens:
+            return float(prediction_tokens == ground_truth_tokens)
 
-        if len(common_tokens) == 0:
+        common = Counter(prediction_tokens) & Counter(ground_truth_tokens)
+
+        num_common = sum(common.values())
+
+        if num_common == 0:
             return 0.0
 
-        precision = len(common_tokens) / len(prediction_tokens)
-        recall = len(common_tokens) / len(ground_truth_tokens)
+        precision = num_common / len(prediction_tokens)
 
-        f1 = (2 * precision * recall) / (precision + recall)
+        recall = num_common / len(ground_truth_tokens)
 
-        return round(f1, 4)
+        f1 = 2 * precision * recall / (precision + recall)
+
+        return f1
+
+
+if __name__ == "__main__":
+
+    prediction = (
+        "The electric battery was invented "
+        "by Alessandro Giuseppe Antonio Anastasio Volta."
+    )
+
+    ground_truth = "Alessandro Volta"
+
+    print("Exact Match:", EvaluationMetrics.exact_match(prediction, ground_truth))
+
+    print("F1 Score:", EvaluationMetrics.f1_score(prediction, ground_truth))

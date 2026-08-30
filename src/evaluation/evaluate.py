@@ -1,35 +1,31 @@
-"""
-evaluate.py
-
-Evaluates generated answers using
-Exact Match (EM) and F1 Score.
-"""
-
 from src.evaluation.metrics import EvaluationMetrics
+
 
 class Evaluator:
     """
     Evaluate generated answers.
     """
 
-    def evaluate(self, prediction: str, ground_truth: str):
+    def evaluate(self, prediction: str, ground_truth: str) -> dict:
         """
-        Evaluate one prediction.
+        Evaluate one prediction against one ground truth.
+
         Returns:
             Dictionary containing EM and F1.
         """
 
-        em = EvaluationMetrics.exact_match(prediction, ground_truth)
+        exact_match = EvaluationMetrics.exact_match(prediction, ground_truth)
 
         f1 = EvaluationMetrics.f1_score(prediction, ground_truth)
 
-        return {"Exact Match": em, "F1 Score": f1}
+        return {"exact_match": exact_match, "f1": f1}
+
 
 if __name__ == "__main__":
 
-    ground_truth = "Delhi"
+    prediction = "The electric battery was invented " "by Alessandro Volta."
 
-    prediction = "The capital of India is Delhi."
+    ground_truth = "Alessandro Volta"
 
     evaluator = Evaluator()
 
@@ -37,5 +33,6 @@ if __name__ == "__main__":
 
     print("\nEvaluation Results\n")
 
-    print(f"Exact Match : {results['Exact Match']}")
-    print(f"F1 Score    : {results['F1 Score']}")
+    print(f"Exact Match : " f"{results['exact_match']}")
+
+    print(f"F1 Score    : " f"{results['f1']:.4f}")

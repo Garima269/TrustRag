@@ -1,28 +1,7 @@
-"""
-clean_text.py
-
-This module cleans the retrieved sentences after sentence segmentation.
-
-Cleaning performed:
-- Remove leading/trailing spaces
-- Remove extra spaces
-- Remove tabs
-- Remove newlines
-
-Input:
-    List of sentence dictionaries
-
-Output:
-    Cleaned sentence dictionaries
-"""
-
 import re
 from typing import List, Dict
 
 class TextCleaner:
-    """
-    Cleans sentence-level text while preserving metadata.
-    """
 
     def clean_sentence(self, sentence_record: Dict) -> Dict:
         """
@@ -35,7 +14,8 @@ class TextCleaner:
             dict
         """
 
-        cleaned_sentence = sentence_record["sentence_text"]
+        cleaned_sentence = sentence_record.get("sentence_text", "")
+        cleaned_sentence = str(cleaned_sentence)
 
         # Remove newline characters
         cleaned_sentence = cleaned_sentence.replace("\n", " ")
@@ -50,21 +30,14 @@ class TextCleaner:
         cleaned_sentence = cleaned_sentence.strip()
 
         # Create a copy to avoid modifying the original dictionary
+
+        # Preserve original metadata while updating only the cleaned sentence
         cleaned_record = sentence_record.copy()
         cleaned_record["sentence_text"] = cleaned_sentence
 
         return cleaned_record
 
     def clean_sentences(self, sentence_records: List[Dict]) -> List[Dict]:
-        """
-        Clean multiple sentence records.
-
-        Parameters:
-            sentence_records (List[dict])
-
-        Returns:
-            List[dict]
-        """
 
         cleaned_sentences = []
 

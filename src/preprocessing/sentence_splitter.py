@@ -1,14 +1,19 @@
 """
 sentence_splitter.py
 
-This module splits retrieved documents into individual sentences
-using spaCy.
+Splits retrieved documents into individual sentences.
 
 Input:
-    List of retrieved documents
+    Retrieved documents from Retriever.
 
 Output:
-    List of sentence-level dictionaries
+    Sentence-level records containing:
+        - doc_id
+        - title
+        - rank
+        - retriever_score
+        - sentence_id
+        - sentence_text
 """
 
 from typing import List, Dict
@@ -17,52 +22,57 @@ import spacy
 
 class SentenceSplitter:
     """
-    Splits retrieved documents into individual sentences while
-    preserving document-level metadata.
+    Splits retrieved documents into sentences using spaCy.
     """
 
     def __init__(self, model_name: str = "en_core_web_sm"):
-        """
-        Load the spaCy language model.
 
-        Parameters:
-            model_name (str): Name of the spaCy model.
-        """
+        print("Loading Sentence Splitter...")
+
         self.nlp = spacy.load(model_name)
+
+        print("Sentence Splitter Ready!\n")
 
     def split_document(self, document: Dict) -> List[Dict]:
         """
-        Split a single document into sentences.
+        Split one retrieved document into sentences.
 
         Parameters:
-            document (dict): Retrieved document containing
-                - doc_id
-                - text
-                - (optional) title
-                - (optional) rank
-                - (optional) retriever_score
+            document (dict):
+                Retrieved document containing:
+                doc_id
+                title
+                rank
+                retriever_score
+                text
 
         Returns:
-            List[dict]: Sentence-level records.
+            List of sentence records.
         """
 
-        # Check if document contains text
-        if "text" not in document or not document["text"].strip():
+        text = document.get("text", "")
+
+        if not text or not str(text).strip():
             return []
 
-        doc = self.nlp(document["text"])
+        doc = self.nlp(str(text))
 
         sentences = []
 
         for idx, sent in enumerate(doc.sents, start=1):
 
+            sentence_text = sent.text.strip()
+
+            if not sentence_text:
+                continue
+
             sentence_record = {
                 "doc_id": document.get("doc_id"),
                 "title": document.get("title", ""),
-                "rank": document.get("rank", None),
-                "retriever_score": document.get("retriever_score", None),
+                "rank": document.get("rank"),
+                "retriever_score": document.get("retriever_score"),
                 "sentence_id": idx,
-                "sentence_text": sent.text.strip()
+                "sentence_text": sentence_text,
             }
 
             sentences.append(sentence_record)
@@ -71,19 +81,23 @@ class SentenceSplitter:
 
     def split_documents(self, documents: List[Dict]) -> List[Dict]:
         """
-        Split multiple retrieved documents into sentences.
+        Split all retrieved documents into sentences.
 
         Parameters:
-            documents (List[dict])
+            documents (list):
+                Retrieved documents from Retriever.
 
         Returns:
-            List[dict]
+            List of sentence-level records.
         """
 
         all_sentences = []
 
         for document in documents:
-            all_sentences.extend(self.split_document(document))
+
+            sentences = self.split_document(document)
+
+            all_sentences.extend(sentences)
 
         return all_sentences
 
@@ -93,17 +107,14 @@ if __name__ == "__main__":
     sample_documents = [
         {
             "doc_id": 1,
-            "title": "Delhi",
+            "title": "Alessandro Volta",
             "rank": 1,
-            "retriever_score": 0.95,
-            "text": "Delhi is the capital of India. It is located in northern India."
-        },
-        {
-            "doc_id": 2,
-            "title": "Mumbai",
-            "rank": 2,
-            "retriever_score": 0.91,
-            "text": "Mumbai is India's financial capital. It has a large population."
+            "retriever_score": 0.7718,
+            "text": (
+                "Alessandro Volta was an Italian physicist. "
+                "He invented the electric battery. "
+                "The battery was developed in 1799."
+            ),
         }
     ]
 
@@ -111,7 +122,7 @@ if __name__ == "__main__":
 
     sentences = splitter.split_documents(sample_documents)
 
-    print("\nSentence Segmentation Output:\n")
+    print("Sentence Segmentation Output\n")
 
     for sentence in sentences:
         print(sentence)

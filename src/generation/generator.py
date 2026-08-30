@@ -1,22 +1,6 @@
-"""
-generator.py
-
-This module generates answers using a Hugging Face
-instruction-tuned language model.
-
-Input:
-    - User Question
-    - Retrieved Context
-
-Output:
-    - Generated Answer
-"""
-
 from src.utils.config import (
     MODEL_NAME,
     MAX_NEW_TOKENS,
-    TEMPERATURE,
-    DO_SAMPLE,
 )
 
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -24,82 +8,75 @@ import torch
 
 
 class AnswerGenerator:
-    """
-    Generate answers using an instruction-tuned LLM.
-    """
 
     def __init__(self):
-        """
-        Load tokenizer and language model.
-        """
 
         print("Loading tokenizer...")
+
         self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
         print("Loading model...")
+
         self.model = AutoModelForCausalLM.from_pretrained(
-            MODEL_NAME,
-            torch_dtype=torch.float32,
-            device_map="cpu"
+            MODEL_NAME, torch_dtype=torch.float32
         )
+
+        self.model.eval()
 
         print("Model loaded successfully!")
 
     def build_prompt(self, question: str, context: str) -> str:
-        """
-        Build the prompt for the language model.
-        """
+    
+        prompt = f"""You are a factual question-answering assistant.
 
-        prompt = f"""
-You are a factual Question Answering assistant.
+    Use ONLY the information provided in the retrieved context.
 
-Instructions:
-1. Answer ONLY using the provided context.
-2. Keep the answer short and precise.
-3. Do NOT add extra information.
-4. If the answer is not present in the context, reply exactly:
-"I don't have enough information in the provided context."
+    Rules:
+    1. Return ONLY the shortest possible answer.
+    2. Do NOT explain your reasoning.
+    3. Do NOT write complete sentences.
+    4. Do NOT repeat the question.
+    5. If the answer is a person's name, return only the name.
+    6. If the answer is a date, return only the date.
+    7. If the answer is a place, return only the place name.
+    8. If the answer is not present in the context, reply exactly:
+    "I don't have enough information in the provided context."
 
-Context:
-{context}
+    Context:
+    {context}
 
-Question:
-{question}
+    Question:
+    {question}
 
-Answer:
-"""
+    Answer:
+    """
 
         return prompt
 
     def generate_answer(self, question: str, context: str) -> str:
-        """
-        Generate answer using the language model.
-        """
 
         prompt = self.build_prompt(question, context)
 
-        inputs = self.tokenizer(
-            prompt,
-            return_tensors="pt"
-        )
+        inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True)
 
         with torch.no_grad():
 
             outputs = self.model.generate(
                 **inputs,
                 max_new_tokens=MAX_NEW_TOKENS,
-                temperature=TEMPERATURE,
-                do_sample=DO_SAMPLE,
+                do_sample=False,
                 repetition_penalty=1.1,
-                pad_token_id=self.tokenizer.eos_token_id
+                pad_token_id=self.tokenizer.eos_token_id,
             )
 
-        generated_text = self.tokenizer.decode(
-            outputs[0],
-            skip_special_tokens=True
-        )
+        # Only decode newly generated tokens.
+        input_length = inputs["input_ids"].shape[1]
 
-        answer = generated_text.split("Answer:")[-1].strip()
+        generated_tokens = outputs[0, input_length:]
+
+        answer = self.tokenizer.decode(
+            generated_tokens, skip_special_tokens=True
+        ).strip()
 
         return answer
 
@@ -108,18 +85,14 @@ if __name__ == "__main__":
 
     context = """
 Delhi is the capital of India.
-It is located in northern India.
-India is a country in South Asia.
+India is located in South Asia.
 """
 
     question = "What is the capital of India?"
 
     generator = AnswerGenerator()
 
-    answer = generator.generate_answer(
-        question,
-        context
-    )
+    answer = generator.generate_answer(question, context)
 
     print("\nGenerated Answer:\n")
     print(answer)

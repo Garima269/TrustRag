@@ -1,91 +1,46 @@
-"""
-context_builder.py
-
-This module builds the final context for the LLM by combining
-cleaned sentence-level records into a single context string.
-
-Input:
-    List of cleaned sentence dictionaries
-
-Output:
-    Context string
-"""
-
 from typing import List, Dict
 
-
 class ContextBuilder:
-    """
-    Builds context for the Language Model.
-    """
 
-    def build_context(self, sentence_records: List[Dict]) -> str:
-        """
-        Build a context string from sentence records.
+    def __init__(self, max_context_chars: int = 12000):
+        self.max_context_chars = max_context_chars
 
-        Parameters:
-            sentence_records (List[Dict])
+    def build_context(self, documents: List[Dict]) -> str:
 
-        Returns:
-            str
-        """
-
-        if not sentence_records:
+        if not documents:
             return ""
 
-        # Preserve retrieval order
-        sorted_sentences = sorted(
-            sentence_records,
-            key=lambda x: (
-                x.get("rank", float("inf")),
-                x.get("sentence_id", 0)
-            )
-        )
+        context_parts = []
 
-        # Extract sentence text
-        context_sentences = [
-            record["sentence_text"]
-            for record in sorted_sentences
-        ]
+        for document in documents:
 
-        # Join sentences with blank lines
-        context = "\n\n".join(context_sentences)
+            title = document.get("title", "Unknown")
+            text = document.get("text", "")
+
+            if not text:
+                continue
+
+            context_parts.append(f"Title: {title}\n" f"Content: {text}")
+
+        context = "\n\n".join(context_parts)
+
+        # Keep context within a manageable size.
+        if len(context) > self.max_context_chars:
+            context = context[: self.max_context_chars]
 
         return context
 
 
 if __name__ == "__main__":
 
-    sample_sentences = [
-        {
-            "doc_id": 2,
-            "title": "Mumbai",
-            "rank": 2,
-            "retriever_score": 0.91,
-            "sentence_id": 1,
-            "sentence_text": "Mumbai is India's financial capital."
-        },
-        {
-            "doc_id": 1,
-            "title": "Delhi",
-            "rank": 1,
-            "retriever_score": 0.95,
-            "sentence_id": 1,
-            "sentence_text": "Delhi is the capital of India."
-        },
-        {
-            "doc_id": 1,
-            "title": "Delhi",
-            "rank": 1,
-            "retriever_score": 0.95,
-            "sentence_id": 2,
-            "sentence_text": "It is located in northern India."
-        }
+    documents = [
+        {"title": "Example Document", "text": "Delhi is the capital of India."},
+        {"title": "Another Document", "text": "India is located in South Asia."},
     ]
 
     builder = ContextBuilder()
 
-    context = builder.build_context(sample_sentences)
+    context = builder.build_context(documents)
 
     print("\nGenerated Context:\n")
     print(context)
